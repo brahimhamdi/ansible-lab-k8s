@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "ansible" do |ansible|
     ansible.vm.box = "generic/ubuntu2004"
-    ansible.vm.nodename = "ansible"
+    ansible.vm.hostname = "ansible"
     ansible.vm.network :private_network, ip: "192.168.201.10"
   end
 
