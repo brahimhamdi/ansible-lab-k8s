@@ -23,9 +23,9 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "node3" do |node3|
-    node2.vm.box = "generic/centos8"
-    node2.vm.hostname = "node3"
-    node2.vm.network :private_network, ip: "192.168.201.13"
+    node3.vm.box = "generic/centos8"
+    node3.vm.hostname = "node3"
+    node3.vm.network :private_network, ip: "192.168.201.13"
   end
 
   #config.vm.provision "shell", inline: <<-SHELL
