@@ -11,7 +11,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "node1" do |node1|
-    node1.vm.box = "generic/ubuntu2004"
+    node1.vm.box = "generic/centos8"
     node1.vm.hostname = "node1"
     node1.vm.network :private_network, ip: "192.168.201.11"
   end
