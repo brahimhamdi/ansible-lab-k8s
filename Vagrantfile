@@ -1,35 +1,39 @@
-Vagrant.configure("2") do |config|  
-#  config.vm.provider "virtualbox"
-  config.vm.provider "virtualbox" do |v|
-        v.customize ["modifyvm", :id, "--memory", "1024"]
+Vagrant.require_version ">= 2.0.0"
+
+boxes = [
+    {
+        :name => "node1",
+        :eth1 => "192.168.201.11",
+        :mem => "1024",
+        :cpu => "1"
+    },
+    {
+        :name => "node2",
+        :eth1 => "192.168.201.12",
+        :mem => "1024",
+        :cpu => "1"
+    },
+    {
+        :name => "node3",
+        :eth1 => "192.168.201.13",
+        :mem => "1024",
+        :cpu => "1"
+    }
+
+]
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos/7"
+
+  boxes.each do |opts|
+      config.vm.define opts[:name] do |config|
+        config.vm.hostname = opts[:name]
+
+        config.vm.provider "virtualbox" do |v|
+          v.customize ["modifyvm", :id, "--memory", opts[:mem]]
+          v.customize ["modifyvm", :id, "--cpus", opts[:cpu]]
+        end
+        config.vm.network :private_network, ip: opts[:eth1]
+      end
   end
-
-  config.vm.define "ansible" do |ansible|
-    ansible.vm.box = "generic/ubuntu2004"
-    ansible.vm.hostname = "ansible"
-    ansible.vm.network :private_network, ip: "192.168.201.10"
-  end
-
-  config.vm.define "node1" do |node1|
-    node1.vm.box = "generic/centos8"
-    node1.vm.hostname = "node1"
-    node1.vm.network :private_network, ip: "192.168.201.11"
-  end
-
-  config.vm.define "node2" do |node2|
-    node2.vm.box = "generic/centos8"
-    node2.vm.hostname = "node2"
-    node2.vm.network :private_network, ip: "192.168.201.12"
-  end
-
-  config.vm.define "node3" do |node3|
-    node3.vm.box = "generic/centos8"
-    node3.vm.hostname = "node3"
-    node3.vm.network :private_network, ip: "192.168.201.13"
-  end
-
-  #config.vm.provision "shell", inline: <<-SHELL
-  #  sudo echo "nameserver  8.8.8.8" > /etc/resolv.conf
-  #SHELL
-
 end
