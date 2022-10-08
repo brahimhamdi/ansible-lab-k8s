@@ -1,0 +1,109 @@
+---
+- hosts: nodes
+  become: true
+  tasks:
+  - name: Installer des packages qui permettent à apt d'être utilisé sur HTTPS
+    apt:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg-agent
+      - software-properties-common
+
+  - name: Ajouter une clé de signature apt pour Docker
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  - name: Ajouter un repo apt docker
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+      state: present
+
+  - name: Installer containerd
+    apt: 
+      name: containerd.io
+      state: present
+
+  - name: Config par défaut containerd
+    command: "containerd config default | sudo tee /etc/containerd/config.toml"
+
+  - name: Configurer Containerd
+    command: "sed -i 's/systemdCgroup \\= false/systemdCgroup \\= true/g' /etc/containerd/config.toml"
+
+  - name: Restarter Containerd
+    service: 
+      name: containerd
+      state: restarted
+
+  - name: Télécharger cri
+    command: wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.25.0/crictl-v1.25.0-linux-amd64.tar.gz
+
+  - name: Extraire cri
+    command: "tar zxvf crictl-v1.25.0-linux-amd64.tar.gz -C /usr/local/bin"
+
+  - name: Charger module netfilter
+    command: "modprobe br_netfilter"
+
+  - name: Activer ip_forwarding
+    command: "sysctl -w net.ipv4.ip_forward=1"
+
+  - name: Supprimer le fichier d'échange de /etc/fstab
+    mount:
+      name: "{{ item }}"
+      fstype: swap
+      state: absent
+    with_items:
+      - swap
+      - none
+
+  - name: Désactiver swap
+    command: swapoff -a
+    when: ansible_swaptotal_mb > 0
+
+  - name: Ajouter une clé de signature apt pour Kubernetes
+    apt_key:
+      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      state: present
+
+  - name: Ajout d'un répo apt pour Kubernetes
+    apt_repository:
+      repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+      state: present
+      filename: kubernetes.list
+
+  - name: Installer les binaires Kubernetes
+    apt: 
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+        - kubelet 
+        - kubeadm 
+        - kubectl
+
+  - name: Configure node ip
+    lineinfile:
+      path: /etc/default/kubelet
+      line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
+      create: yes
+    vars:
+      node_ip:
+        - 192.168.201.11
+        - 192.168.202.12
+
+  - name: Redémarrer kubelet
+    service:
+      name: kubelet
+      daemon_reload: yes
+      state: restarted
+
+  - name: Copiez la commande join à l'emplacement du serveur
+    copy: src=join-command dest=/tmp/join-command.sh mode=0777
+
+  - name: Joindre le cluster
+    command: sh /tmp/join-command.sh
