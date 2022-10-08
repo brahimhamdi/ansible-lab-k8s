@@ -2,20 +2,20 @@ Vagrant.require_version ">= 2.0.0"
 
 boxes = [
     {
-        :name => "web1",
-        :eth1 => "192.168.205.121",
+        :name => "ans-master",
+        :eth1 => "192.168.205.100",
+        :mem => "4096",
+        :cpu => "2"
+    },
+    {
+        :name => "ans-worker1",
+        :eth1 => "192.168.205.101",
         :mem => "2048",
         :cpu => "1"
     },
     {
-        :name => "web2",
-        :eth1 => "192.168.205.122",
-        :mem => "2048",
-        :cpu => "1"
-    },
-    {
-        :name => "db",
-        :eth1 => "192.168.205.123",
+        :name => "ans-worker2",
+        :eth1 => "192.168.205.102",
         :mem => "2048",
         :cpu => "1"
     }
@@ -37,9 +37,5 @@ Vagrant.configure(2) do |config|
         config.vm.network :private_network, ip: opts[:eth1]
       end
   end
-
-  config.vm.provision "shell", inline: <<-SHELL
-    sudo apt update
-  SHELL
 
 end
