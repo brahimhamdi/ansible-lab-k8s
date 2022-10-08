@@ -12,6 +12,12 @@ boxes = [
         :eth1 => "192.168.205.122",
         :mem => "2048",
         :cpu => "1"
+    },
+    {
+        :name => "db",
+        :eth1 => "192.168.205.123",
+        :mem => "2048",
+        :cpu => "1"
     }
 
 ]
@@ -34,15 +40,6 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "shell", inline: <<-SHELL
     sudo apt update
-  SHELL
-
-
-  config.vm.define "db" do |db|
-    db.vm.box = "centos/7"
-  end
-
-  config.vm.provision "shell", inline: <<-SHELL
-    yum update
   SHELL
 
 end
