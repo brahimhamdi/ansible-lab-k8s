@@ -1,112 +1,12 @@
 ---
 - hosts: ans-master
   become: true
-  vars:
-    node_ip: "192.168.205.100"
   tasks:
-  - name: Installer des packages qui permettent à apt d'être utilisé sur HTTPS
-    apt:
-      name: "{{ packages }}"
-      state: present
-    vars:
-      packages:
-      - apt-transport-https
-      - ca-certificates
-      - curl
-      - gnupg-agent
-      - software-properties-common
-
-  - name: Ajouter une clé de signature apt pour Docker
-    apt_key:
-      url: https://download.docker.com/linux/ubuntu/gpg
-      state: present
-
-  - name: Ajouter un repo apt docker
-    apt_repository:
-      repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
-      state: present
-
-  - name: Installer containerd
-    apt: 
-      name: containerd.io
-      state: present
-
-  - name: Config par défaut containerd
-    command: "containerd config default | sudo tee /etc/containerd/config.toml"
-
-  - name: Configurer Containerd
-    command: "sed -i 's/systemdCgroup \\= false/systemdCgroup \\= true/g' /etc/containerd/config.toml"
-
-  - name: Restarter Containerd
-    service: 
-      name: containerd
-      state: restarted
-
-  - name: Télécharger cri
-    command: wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.25.0/crictl-v1.25.0-linux-amd64.tar.gz
-    tags:
-      - init_cluster
-
-  - name: Extraire cri
-    command: "tar zxvf crictl-v1.25.0-linux-amd64.tar.gz -C /usr/local/bin"
-    tags:
-      - init_cluster
-
-  - name: Charger module netfilter
-    command: "modprobe br_netfilter"
-
-  - name: Activer ip_forwarding
-    command: "sysctl -w net.ipv4.ip_forward=1"
-
-  - name: Supprimer le fichier d'échange de /etc/fstab
-    mount:
-      name: "{{ item }}"
-      fstype: swap
-      state: absent
-    with_items:
-      - swap
-      - none
-
-  - name: Désactiver swap
-    command: swapoff -a
-    when: ansible_swaptotal_mb > 0
-
-  - name: Ajouter une clé de signature apt pour Kubernetes
-    apt_key:
-      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-      state: present
-
-  - name: Ajout d'un répo apt pour Kubernetes
-    apt_repository:
-      repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
-      state: present
-      filename: kubernetes.list
-
-  - name: Installer les binaires Kubernetes
-    apt: 
-      name: "{{ packages }}"
-      state: present
-    vars:
-      packages:
-        - kubelet 
-        - kubeadm 
-        - kubectl
-
-  - name: Configurer ip du node
-    lineinfile:
-      path: /etc/default/kubelet
-      create: yes
-      line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
-
   - name: Initialiser le cluster Kubernetes à l'aide de kubeadm
     command: kubeadm init --apiserver-advertise-address="192.168.205.100" --pod-network-cidr=10.244.0.0/16
-    tags:
-      - init_cluster
 
   - name: Configurer kubeconfig pour l'utilisateur vagrant
     command: "{{ item }}"
-    tags:
-      - init_cluster
     with_items:
      - mkdir -p /home/vagrant/.kube
      - cp /etc/kubernetes/admin.conf /home/vagrant/.kube/config
@@ -115,19 +15,16 @@
   - name: Installer un réseau de pods en flannel
     become: false
     command: kubectl create -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-    tags:
-      - init_cluster
 
   - name: Générer la commande de join
     command: kubeadm token create --print-join-command
     register: join_command
 
   - name: Copier la commande join dans un fichier sur master
-    copy: content="{{ join_command.stdout_lines[0] }}" dest="./join-command
-    
+    copy: content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
 
   - name: Copier la commande join à un fichier local
-    fetch: src=./join-command dest="./join-command
+    fetch: src=./join-command dest="./join-command"
 
   - name: Copier la commande join sur les nodes
-    copy: src=./join-command dest=~/
+    copy: src=./join-command dest=./join-command
