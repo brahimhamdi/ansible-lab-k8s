@@ -19,12 +19,15 @@
   - name: Générer la commande de join
     command: kubeadm token create --print-join-command
     register: join_command
+    tags :
+    - join_command
 
   - name: Copier la commande join dans un fichier sur master
     copy: content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
+    tags :
+    - join_command
 
   - name: Copier la commande join à un fichier local
     fetch: src=./join-command dest="./join-command"
-
-  - name: Copier la commande join sur les nodes
-    copy: src=./join-command dest=./join-command
+    tags :
+    - join_command
