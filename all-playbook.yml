@@ -30,7 +30,7 @@
       state: present
 
   - name: Config par défaut containerd
-    command: "containerd config default | tee /etc/containerd/config.toml"
+    command: "containerd config default > /etc/containerd/config.toml"
 
   - name: Configurer Containerd
     ansible.builtin.lineinfile:
