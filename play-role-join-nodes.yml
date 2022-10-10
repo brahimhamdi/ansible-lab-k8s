@@ -1,0 +1,4 @@
+- hosts: ans-master
+  become: true
+  roles:
+    - role-join-nodes 

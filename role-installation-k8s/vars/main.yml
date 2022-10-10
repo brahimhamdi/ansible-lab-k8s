@@ -1,0 +1,12 @@
+packages1:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg-agent
+  - software-properties-common
+
+packages2:
+  - kubelet
+  - kubeadm
+  - kubectl
+

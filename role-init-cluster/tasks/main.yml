@@ -1,0 +1,23 @@
+- name: Initialiser le cluster Kubernetes à l'aide de kubeadm
+  command: kubeadm init --apiserver-advertise-address="192.168.205.100" --pod-network-cidr=10.244.0.0/16
+
+- name: Configurer kubeconfig pour l'utilisateur vagrant
+  command: "{{ item }}"
+  with_items:
+   - mkdir -p /home/vagrant/.kube
+   - cp /etc/kubernetes/admin.conf /home/vagrant/.kube/config
+   - chown vagrant:vagrant /home/vagrant/.kube/config
+
+- name: Installer un réseau de pods en flannel
+  become: false
+  command: kubectl create -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+
+- name: Générer la commande de join
+  command: kubeadm token create --print-join-command
+  register: join_cmd
+
+- name: Copier la commande join dans un fichier sur master
+  copy: content="{{ join_cmd.stdout_lines[0] }}" dest="./join-command"
+
+- name: Copier la commande join à un fichier local
+  fetch: src=./join-command dest="./join-command"

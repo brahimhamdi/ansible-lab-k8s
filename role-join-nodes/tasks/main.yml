@@ -1,0 +1,9 @@
+- name: Copiez la commande join sur les cibles
+  copy: src=./join-command dest=/tmp/join-command.sh mode=0777
+  tags:
+    - join_command
+
+- name: Joindre le cluster
+  command: bash /tmp/join-command.sh/join-command/ans-master/join-command
+  tags:
+    - join_command
