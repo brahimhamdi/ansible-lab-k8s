@@ -1,0 +1,178 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+ name: dockercoins
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: worker
+ namespace: dockercoins
+ labels:
+  app: dockercoins
+  tier: worker
+spec:
+ replicas: 5
+ strategy:
+  type: RollingUpdate
+  rollingUpdate:
+   maxSurge: 2
+   maxUnavailable: 0
+ selector:
+  matchLabels:
+   tier: worker
+ template:
+  metadata:
+   labels:
+    tier: worker
+  spec:
+   containers:
+   - name: worker
+     image: brahimhamdi/worker:2.0
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+ name: rng
+ namespace: dockercoins
+ labels:
+  app: dockercoins
+  tier: rng
+spec:
+ selector:
+  matchLabels:
+   tier: rng
+ template:
+  metadata:
+   labels:
+    tier: rng
+  spec:
+   containers:
+   - name: rng
+     image: brahimhamdi/rng:1.0
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: rng
+ namespace: dockercoins
+spec:
+ selector:
+  tier: rng
+ type: ClusterIP
+ ports:
+ - port: 80
+   targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: hasher
+ namespace: dockercoins
+ labels:
+  app: dockercoins
+  tier: hasher
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+   tier: hasher
+ template:
+  metadata:
+   labels:
+    tier: hasher
+  spec:
+   containers:
+   - name: hasher
+     image: brahimhamdi/hasher:1.0
+     resources:
+      requests:
+       memory: "300Mi"
+       cpu: "0.1"
+      limits:
+       memory: "600Mi"
+       cpu: "0.2"
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: hasher
+ namespace: dockercoins
+spec:
+ selector:
+  tier: hasher
+ type: ClusterIP
+ ports:
+ - port: 80
+   targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: redis
+ namespace: dockercoins
+ labels:
+  app: dockercoins
+  tier: redis
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+   tier: redis
+ template:
+  metadata:
+   labels:
+    tier: redis
+  spec:
+   containers:
+   - name: redis
+     image: redis:latest
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: redis
+ namespace: dockercoins
+spec:
+ selector:
+  tier: redis
+ type: ClusterIP
+ ports:
+ - port: 6379
+   targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: webui
+ namespace: dockercoins
+ labels:
+  app: dockercoins
+  tier: webui
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+   tier: webui
+ template:
+  metadata:
+   labels:
+    tier: webui
+  spec:
+   containers:
+   - name: webui
+     image: brahimhamdi/webui:1.0
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: webui
+ namespace: dockercoins
+spec:
+ selector:
+  tier: webui
+ type: NodePort
+ ports:
+ - port: 80
+   targetPort: 80
+   nodePort: 30001
