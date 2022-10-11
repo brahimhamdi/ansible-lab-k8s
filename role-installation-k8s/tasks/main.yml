@@ -18,17 +18,15 @@
     name: containerd.io
     state: present
 
-- name: Config par défaut containerd
-  command: "containerd config default > /etc/containerd/config.toml"
-
-- name: Configurer Containerd
-  ansible.builtin.lineinfile:
-    path: /etc/containerd/config.toml
-    state: present
-    regexp: 'systemd_cgroup = false'
-    line: 'SystemdCgroup = true'
-  notify:
-    - Restarter Containerd
+ - name: Copier config.toml sur les hôtes 
+    copy:
+     src: config.toml
+     dest: /etc/containerd/config.toml
+     owner: root
+     group: root
+     mode: 644
+    notify:
+      - Restarter Containerd
 
 - name: Télécharger cri
   command: wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.25.0/crictl-v1.25.0-linux-amd64.tar.gz
