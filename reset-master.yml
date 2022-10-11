@@ -1,0 +1,14 @@
+- hosts: ans-master
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Reset master
+      command: kubeadm reset --force
+    - name: supprimer l'ancienne installation
+      file:
+        path: 
+         - /home/vagrant/.kube
+         - /etc/kubernetes
+         - /var/lib/etcd
+         - /var/lib/kubelet
+        state: absent
