@@ -1,0 +1,18 @@
+- hosts: ans-master
+  become: false
+  gather_facts: false
+  tasks:
+    - name: copier le manifest dockercoins-k8s.yml sur le Master
+      copy:
+        src: dockercoins-k8s.yml 
+        dest: /tmp/
+      tags:
+        - copy_dockercoins
+    - name: Déployer dockercoins
+      command: kubectl apply -f /tmp/dockercoins-k8s.yml
+      register: deployres
+      tags:
+        - deploy_dockercoins
+    - name: Afficher résultat de déploiement de dockercoins
+      debug:
+        msg: "{{ deployres.stdout_lines | list }}"
